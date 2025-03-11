@@ -1,0 +1,19 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "backend project",
+  "tyep": "module",
+  "main": "index.js",
+  "scripts": {
+    "nodemon": "nodemon src/index.js"
+  },
+  "author": "rithish",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.4.7"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9",
+    "prettier": "^3.5.3"
+  }
+}
