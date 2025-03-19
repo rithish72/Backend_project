@@ -1,7 +1,10 @@
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiError } from '../utils/ApiError.js';
 import { User } from '../models/user.model.js';
-import { uploadOnCloudinary } from '../utils/cloudinary.js'
+import { 
+    uploadOnCloudinary,
+    deleteOnCloudinary
+ } from '../utils/cloudinary.js'
 import { ApiResponse } from '../utils/ApiResponse.js';
 import jwt from "jsonwebtoken";
 import mongoose from 'mongoose';
@@ -77,7 +80,7 @@ const registerUser = asyncHandler( async (req, res) => {
         email,
         coverImage: coverImage?.url || "",
         password,
-        username: username.toLowerCase()
+        username: (username ?? "").toLowerCase()
     })
 
     const createUser = await User.findById((user._id)).select(
@@ -301,36 +304,53 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
 })
 
 const updateUserAvatar = asyncHandler( async (req, res) => {
-    const avatarLocalPath = req.file?.path
+    const avatarLocalPath = req.file?.path;
 
-    if(!avatarLocalPath){
-        throw new ApiError(400, "Avatarfile is missing")
+    if (!avatarLocalPath) {
+        throw new ApiError(400, "Avatar file is missing");
     }
 
+    //upload the new avatar on Cloudinary
     const avatar = await uploadOnCloudinary(avatarLocalPath)
 
     if(!avatar.url) {
         throw new ApiError(400, "Error while uploading on avatar")
     }
 
-    const user = await User.findByIdAndUpdate(
+    // Find the user to get the current avatar URL
+    if (!req.user || !req.user._id) {
+        throw new ApiError(401, "User not authenticated");
+    }
+
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+        throw new ApiError(401, "User not found");
+    }
+    
+    // Delete the old avatar from Cloudinary if it exists
+    if(user.avatar) {
+        const avatarId = user.avatar.split('/').pop().split('.')[0];
+        await deleteOnCloudinary(avatarId)
+    }
+
+    // Update the user's avatar with the new one
+    const updatedUser = await User.findByIdAndUpdate(
         req.user._id,
         {
             $set: {
-                avatar: avatar.url
-            }
+                avatar: avatar.url,
+            },
         },
-        {new: true}
+        { new: true }
     ).select("-password");
-
-    
 
     return res
     .status(200)
     .json(
         new ApiResponse(
             200, 
-            user, 
+            updatedUser, 
             "Update Avatar"
         )
     )
@@ -347,11 +367,23 @@ const updateUserCoverImage = asyncHandler( async (req, res) => {
     const cover = await uploadOnCloudinary(coverImageLocalPath)
 
     if(!cover.url) {
-        throw new AopiError(400, "Error while uploading on avatar")
+        throw new ApiError(400, "Error while uploading on avatar")
     }
 
-    const user = await User.findByIdAndUpdate(
-        req.ser._id,
+    // Find the user to get the current avatar URL
+    const user = await User.findById(req.user._id);
+    if(!user){
+        throw new ApiError(401,"User not found")
+    }
+        
+    // Delete the old avatar from Cloudinary if it exists
+    if(user.coverImage) {
+        const coverId = user.coverImage.split('/').pop().split('.')[0];
+        await deleteOnCloudinary(coverId)
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+        req.user._id,
         {
             $set: {
                 cover: cover.url
@@ -365,7 +397,7 @@ const updateUserCoverImage = asyncHandler( async (req, res) => {
     .json(
         new ApiResponse(
             200, 
-            user, 
+            updatedUser, 
             "Update Cover Image"
         )
     )
@@ -495,6 +527,36 @@ const getWatchHistory = asyncHandler( async(req,res) => {
     )
 })
 
+const removeUser = asyncHandler( async(req,res) => {
+    const user = await User.findById( req.user._id )
+
+    if(!user){
+        throw ApiError (404, "User not found");
+    }
+
+    if(user.avatar){
+        const avatarId = user.split('/').pop().split('.')[0];
+        await deleteOnCloudinary(avatarId)
+    }
+
+    if(user.cover){
+        const coverId = user.split('/').pop().split('.')[0];
+        await deleteOnCloudinary(coverId)
+    }
+
+    const isRemoved = await User.findByIdAndDelete(req.user._id);
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            isRemoved,
+            "User removed successfully"
+        )
+    )
+})
+
 export {
     registerUser,
     loginUser,
@@ -506,5 +568,6 @@ export {
     updateUserAvatar,
     updateUserCoverImage,
     getUserChannelProfile,
-    getWatchHistory
+    getWatchHistory,
+    removeUser
 }

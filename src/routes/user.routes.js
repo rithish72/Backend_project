@@ -10,7 +10,8 @@ import {
     updateUserAvatar,
     updateUserCoverImage,
     getUserChannelProfile, 
-    getWatchHistory 
+    getWatchHistory, 
+    removeUser
 } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
@@ -80,6 +81,11 @@ router.route("/c/:username").get(
 router.route("/history").get(
     verifyJWT,
     getWatchHistory
+)
+
+router.route("/remove").delete(
+    verifyJWT,
+    removeUser
 )
 
 router.route("/")
