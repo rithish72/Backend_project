@@ -44,7 +44,7 @@ const deleteOnCloudinary = async (publicId) => {
             throw new ApiError(500, `Failed to delete the image: ${response.result}`);
         }
     } catch (error) {
-        throw new ApiError(500, error.message || 'Failed to delete image 1');
+        throw new ApiError(500, error.message || 'Failed to delete image');
     }
 };
 

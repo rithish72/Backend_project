@@ -88,5 +88,5 @@ router.route("/remove").delete(
     removeUser
 )
 
-router.route("/")
+
 export default router
