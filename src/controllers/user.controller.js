@@ -4,27 +4,27 @@ import { User } from '../models/user.model.js';
 import { 
     uploadOnCloudinary,
     deleteOnCloudinary
-} from '../utils/cloudinary.js'
+} from '../utils/cloudinary.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import jwt from "jsonwebtoken";
 import mongoose from 'mongoose';
 
 const generateAccessAndRefreshToken = async (userId) => {
     try{
-        const user = await User.findById(userId)
-        const accessToken = user.generateAccessToken()
-        const refreshToken = user.generateRefreshToken()
+        const user = await User.findById(userId);
+        const accessToken = user.generateAccessToken();
+        const refreshToken = user.generateRefreshToken();
 
-        user.refreshToken = refreshToken
-        await user.save({validateBeforeSave: false})
+        user.refreshToken = refreshToken;
+        await user.save({validateBeforeSave: false});
 
-        return {accessToken, refreshToken}
+        return {accessToken, refreshToken};
 
     }
     catch(error){
-        throw new ApiError(500, "Something went worng while generating refresh and access token")
+        throw new ApiError(500, "Something went worng while generating refresh and access token");
     }
-}
+};
 
 const registerUser = asyncHandler( async (req, res) => {
     // get user details from frontend 
@@ -44,15 +44,15 @@ const registerUser = asyncHandler( async (req, res) => {
         [fullname, email, username, password].some((field) => field?.trim() === "")
     ) 
     {
-        throw new ApiError(400, "All fields are required")
+        throw new ApiError(400, "All fields are required");
     }
 
     const existedUser = await User.findOne({
-        $or: [{ username }, { email }]
+        $or: [{ username }, { email }],
     })
 
     if(existedUser) {
-        throw new ApiError(409, "User with email or username is already exists")
+        throw new ApiError(409, "User with email or username is already exists");
     }
 
     const avatarLocalPath = req.files?.avatar[0]?.path;
@@ -63,21 +63,21 @@ const registerUser = asyncHandler( async (req, res) => {
     }
     
     if(!avatarLocalPath){
-        throw new ApiError(400, "Avatar file is required")
+        throw new ApiError(400, "Avatar file is required");
     }
 
     const avatar = await uploadOnCloudinary(avatarLocalPath);
     const coverImage = await uploadOnCloudinary(coverImageLocalPath);
     
     if(!avatar) {
-        throw new ApiError(400, "Avatar file is required")
+        throw new ApiError(400, "Avatar file is required");
     }
 
     const user = await User.create({
         fullname,
         avatar: {
             url: avatar.url,
-            public_id: avatar.public_id
+            public_id: avatar.public_id,
         },
         email,
         coverImage: {
@@ -85,7 +85,7 @@ const registerUser = asyncHandler( async (req, res) => {
             public_id: coverImage?.public_id,
         },
         password,
-        username: (username ?? "").toLowerCase()
+        username: (username ?? "").toLowerCase(),
     })
 
     const createUser = await User.findById((user._id)).select(
@@ -93,7 +93,7 @@ const registerUser = asyncHandler( async (req, res) => {
     )
 
     if(!createUser){
-        throw new ApiError(500,"Something went worng while registering the user")
+        throw new ApiError(500,"Something went worng while registering the user");
     }
 
     return res
@@ -102,11 +102,11 @@ const registerUser = asyncHandler( async (req, res) => {
         new ApiResponse(
             200,
             createUser, 
-            "User registered successfully"
+            "User registered successfully",
         )
     )
 
-} )
+} );
 
 const loginUser = asyncHandler( async (req, res)=>{
     // req body --> data
@@ -122,25 +122,25 @@ const loginUser = asyncHandler( async (req, res)=>{
     }
 
     const existedUser = await User.findOne({
-        $or: [{ username: username?.toLowerCase() }, { email: email?.toLowerCase() }]
+        $or: [{ username: username?.toLowerCase() }, { email: email?.toLowerCase() }],
     })
     if(!existedUser){
         throw new ApiError(404, "User does not exist");
     }
 
-    const isPasswordValid = await existedUser.isPasswordCorrect(password)
+    const isPasswordValid = await existedUser.isPasswordCorrect(password);
 
     if(!isPasswordValid){
         throw new ApiError(400, "Password is required");
     }
 
-    const {accessToken, refreshToken} = await generateAccessAndRefreshToken(existedUser._id)
+    const {accessToken, refreshToken} = await generateAccessAndRefreshToken(existedUser._id);
 
-    const loggedInUser = await User.findById(existedUser._id).select(" -password -refreshToken")
+    const loggedInUser = await User.findById(existedUser._id).select(" -password -refreshToken");
 
     const options = {
         httpOnly: true,
-        secure: true
+        secure: true,
     }
 
     if (!accessToken || !refreshToken) {
@@ -155,14 +155,14 @@ const loginUser = asyncHandler( async (req, res)=>{
         new ApiResponse(
             200,
             {
-                user:loggedInUser, accessToken, refreshToken
+                user:loggedInUser, accessToken, refreshToken,
             },
-            "User logged In Successfully"
+            "User logged In Successfully",
         )
     )
 
 
-} )
+} );
 
 const logoutUser = asyncHandler(async (req,res) => {
 
@@ -174,17 +174,17 @@ const logoutUser = asyncHandler(async (req,res) => {
         req.user._id,
         {
             $set: {
-                refreshToken: undefined
+                refreshToken: undefined,
             }
         },
         {
-            new: true
+            new: true,
         }
     )
 
     const options = {
         httpOnly: true,
-        secure: true
+        secure: true,
     }
 
     return res
@@ -194,42 +194,42 @@ const logoutUser = asyncHandler(async (req,res) => {
     .json(new ApiResponse(
         200,
         {},
-        "User logged Out"
+        "User logged Out",
     ))
-}) 
+});
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
-    const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken
+    const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken;
     if(!incomingRefreshToken){
-        throw new ApiError(401, "Unauthorized request")
+        throw new ApiError(401, "Unauthorized request");
     }
 
     try {
         const decodedToken = jwt.verify(
             incomingRefreshToken,
-            process.env.REFRESH_TOKEN_SECRET
+            process.env.REFRESH_TOKEN_SECRET,
         )
 
         if (!decodedToken || !decodedToken._id) {
             throw new ApiError(401, "Invalid refresh token");
         }
     
-        const user = await User.findById(decodedToken?._id)
+        const user = await User.findById(decodedToken?._id);
     
         if(!user){
-            throw new ApiError(401, "Invalid refresh token")
+            throw new ApiError(401, "Invalid refresh token");
         }
     
         if( incomingRefreshToken !== user?.refreshToken){
-            throw new ApiError(401, "Refresh token is expired or used")
+            throw new ApiError(401, "Refresh token is expired or used");
         }
     
         const options = {
             httpOnly: true,
-            secure: true
+            secure: true,
         }
 
-        const {accessToken, newRefreshToken} = await generateAccessAndRefreshToken(user._id)
+        const {accessToken, newRefreshToken} = await generateAccessAndRefreshToken(user._id);
     
         return res
         .status(200)
@@ -239,7 +239,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
             new ApiResponse(
                 200,
                 {accessToken, refreshToken: newRefreshToken},
-                "Access token refresh"
+                "Access token refresh",
             )
         )
     
@@ -247,28 +247,28 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     } catch (error) {
         throw new ApiError(
             401,
-            error?.message || "Invalid refresh token"
+            error?.message || "Invalid refresh token",
         )
     }
 })
 
 const changeCurrentPassword = asyncHandler (async(req, res) =>{
-    const {oldPassword, newPassword} = req.body
+    const {oldPassword, newPassword} = req.body;
 
     if (!oldPassword || !newPassword) {
         throw new ApiError(400, "All fields are required");
     }
 
-    const user = await User.findById(req.user?._id)
+    const user = await User.findById(req.user?._id);
 
-    const isValidPassword = await user.isPasswordCorrect(oldPassword)
+    const isValidPassword = await user.isPasswordCorrect(oldPassword);
 
     if(!isValidPassword){
-        throw new ApiError(400, "Invalid password")
+        throw new ApiError(400, "Invalid password");
     }
 
     user.password = newPassword;
-    await user.save({validateBeforeSave: false})
+    await user.save({validateBeforeSave: false});
 
     return res
     .status(200)
@@ -276,7 +276,7 @@ const changeCurrentPassword = asyncHandler (async(req, res) =>{
         new ApiResponse(
             200, 
             {}, 
-            "Password Changed Successfully"
+            "Password Changed Successfully",
         )
     )
 })
@@ -299,7 +299,7 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
     if(!fullName || !email){
         throw new ApiError(
             400, 
-            "All fields are required"
+            "All fields are required",
         )
     }
 
@@ -307,7 +307,7 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
         {
             $set: {
                 fullName,
-                email
+                email,
             }
         },
         {new : true}
@@ -319,7 +319,7 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
         new ApiResponse(
             200, 
             user, 
-            "Account details updated successfully"
+            "Account details updated successfully",
     ))
 })
 
@@ -331,10 +331,10 @@ const updateUserAvatar = asyncHandler( async (req, res) => {
     }
 
     //upload the new avatar on Cloudinary
-    const avatar = await uploadOnCloudinary(avatarLocalPath)
+    const avatar = await uploadOnCloudinary(avatarLocalPath);
 
     if(!avatar.url) {
-        throw new ApiError(400, "Error while uploading on avatar")
+        throw new ApiError(400, "Error while uploading on avatar");
     }
 
     // Find the user to get the current avatar URL
@@ -354,7 +354,7 @@ const updateUserAvatar = asyncHandler( async (req, res) => {
             const avatarId = user.avatar.split('/').pop().split('.')[0];
             await deleteOnCloudinary(avatarId);
         } catch (error) {
-            throw new ApiError(500, "Error deleting old avatar")
+            throw new ApiError(500, "Error deleting old avatar");
         }
     }
 
@@ -378,38 +378,38 @@ const updateUserAvatar = asyncHandler( async (req, res) => {
         new ApiResponse(
             200, 
             updatedUser, 
-            "Update Avatar"
+            "Update Avatar",
         )
     )
 
 })
 
 const updateUserCoverImage = asyncHandler( async (req, res) => {
-    const coverImageLocalPath = req.file?.path
+    const coverImageLocalPath = req.file?.path;
 
     if(!coverImageLocalPath){
-        throw new ApiError(400, "Cover Image is missing")
+        throw new ApiError(400, "Cover Image is missing");
     }
 
-    const cover = await uploadOnCloudinary(coverImageLocalPath)
+    const cover = await uploadOnCloudinary(coverImageLocalPath);
 
     if(!cover.url) {
-        throw new ApiError(400, "Error while uploading on avatar")
+        throw new ApiError(400, "Error while uploading on avatar");
     }
 
     // Find the user to get the current avatar URL
     const user = await User.findById(req.user._id);
     if(!user){
-        throw new ApiError(401,"User not found")
+        throw new ApiError(401,"User not found");
     }
         
     // Delete the old avatar from Cloudinary if it exists
     if(user.coverImage) {
         try {
             const coverId = user.coverImage.split('/').pop().split('.')[0];
-            await deleteOnCloudinary(coverId)
+            await deleteOnCloudinary(coverId);
         } catch (error) {
-            throw new ApiError(500, "Error deleting old cover image")
+            throw new ApiError(500, "Error deleting old cover image");
         }
     }
 
@@ -419,7 +419,7 @@ const updateUserCoverImage = asyncHandler( async (req, res) => {
             $set: {
                 coverImage: {
                     url: cover.url,
-                    public_id: cover.public_id
+                    public_id: cover.public_id,
                 }
             }
         },
@@ -432,7 +432,7 @@ const updateUserCoverImage = asyncHandler( async (req, res) => {
         new ApiResponse(
             200, 
             updatedUser, 
-            "Update Cover Image"
+            "Update Cover Image",
         )
     )
     
@@ -508,7 +508,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
         new ApiResponse(
             200, 
             channel[0], 
-            "User channel fetched successfully"
+            "User channel fetched successfully",
         )
     );
 });
@@ -522,7 +522,7 @@ const getWatchHistory = asyncHandler( async(req,res) => {
     const user = await User.aggregate([
         {
             $match: {
-                _id: new mongoose.Types.ObjectId(req.user._id)
+                _id: new mongoose.Types.ObjectId(req.user._id),
             }
         },{
             $lookup: {
@@ -570,31 +570,39 @@ const getWatchHistory = asyncHandler( async(req,res) => {
         new ApiResponse(
             200,
             user[0].watchHistory,
-            "watch history fetch successfully"
+            "watch history fetch successfully",
         )
     )
 })
 
 const removeUser = asyncHandler( async(req,res) => {
-    const user = await User.findById( req.user._id )
+    const user = await User.findById( req.user._id );
 
     if(!user){
-        throw ApiError (404, "User not found");
+        throw ApiError(404, "User not found");
     }
 
     if(user.avatar){
-        const avatarId = user.avatar.split('/').pop().split('.')[0];
-        await deleteOnCloudinary(avatarId)
+        try {
+            const avatarId = user.avatar.split('/').pop().split('.')[0];
+            await deleteOnCloudinary(avatarId);
+        } catch (error) {
+            console.error("Failed to delete avatar:", error);
+        }
     }
 
     if(user.coverImage){
-        const coverId = user.coverImage.split('/').pop().split('.')[0];
-        await deleteOnCloudinary(coverId)
+        try {
+            const coverId = user.coverImage.split('/').pop().split('.')[0];
+            await deleteOnCloudinary(coverId);
+        } catch (error) {
+            console.error("Failed to delete Cover Image:", error);
+        }
     }
 
     const options = {
         httpOnly: true,
-        secure: true
+        secure: true,
     }
 
     const isRemoved = await User.findByIdAndDelete(req.user._id);
@@ -607,7 +615,7 @@ const removeUser = asyncHandler( async(req,res) => {
         new ApiResponse(
             200,
             isRemoved,
-            "User removed successfully"
+            "User removed successfully",
         )
     )
 })
