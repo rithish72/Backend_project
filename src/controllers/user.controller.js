@@ -75,9 +75,15 @@ const registerUser = asyncHandler( async (req, res) => {
 
     const user = await User.create({
         fullname,
-        avatar: avatar.url,
+        avatar: {
+            url: avatar.url,
+            public_id: avatar.public_id
+        },
         email,
-        coverImage: coverImage?.url || "",
+        coverImage: {
+            url: coverImage?.url || "",
+            public_id: coverImage?.public_id,
+        },
         password,
         username: (username ?? "").toLowerCase()
     })
@@ -287,7 +293,6 @@ const getCurrentUser = asyncHandler(async (req, res) => {
     );
 });
 
-
 const updateAccountDetails = asyncHandler(async (req, res) => {
     const {fullName, email} = req.body;
 
@@ -358,7 +363,10 @@ const updateUserAvatar = asyncHandler( async (req, res) => {
         req.user._id,
         {
             $set: {
-                avatar: avatar.url,
+                avatar: {
+                    url: avatar.url,
+                    public_id: avatar.public_id,
+                },
             },
         },
         { new: true }
@@ -409,7 +417,10 @@ const updateUserCoverImage = asyncHandler( async (req, res) => {
         req.user._id,
         {
             $set: {
-                coverImage: cover.url
+                coverImage: {
+                    url: cover.url,
+                    public_id: cover.public_id
+                }
             }
         },
         {new: true}
