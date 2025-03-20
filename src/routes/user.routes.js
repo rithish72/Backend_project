@@ -88,5 +88,8 @@ router.route("/remove").delete(
     removeUser
 )
 
+router.route("/").get((req, res) => {
+    res.send("User routes")
+})
 
 export default router

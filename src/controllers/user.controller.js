@@ -249,10 +249,6 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 const changeCurrentPassword = asyncHandler (async(req, res) =>{
     const {oldPassword, newPassword} = req.body
 
-    // if(newPassword !== conformPassword){
-    //     throw new ApiError(400, "Password not matched")
-    // }
-
     if (!oldPassword || !newPassword) {
         throw new ApiError(400, "All fields are required");
     }
