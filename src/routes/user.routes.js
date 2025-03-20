@@ -3,7 +3,7 @@ import {
     logoutUser, 
     loginUser, 
     registerUser, 
-    refrehAccessToken, 
+    refreshAccessToken, 
     changeCurrentPassword, 
     getCurrentUser, 
     updateAccountDetails,
@@ -43,7 +43,7 @@ router.route("/logout").post(
 )
 
 router.route("/refresh-token").post(
-    refrehAccessToken
+    refreshAccessToken
 )
 
 router.route("/change-password").post(
