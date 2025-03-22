@@ -61,7 +61,9 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
     if (likedAlready) {
         await Like.findByIdAndDelete(likedAlready._id);
 
-        return res.status(200).json(
+        return res
+        .status(200)
+        .json(
             new ApiResponse(
                 200,
                 { commentId, isLiked: false },
@@ -104,7 +106,9 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
     if (likedAlready) {
         await Like.findByIdAndDelete(likedAlready._id);
 
-        return res.status(200).json(
+        return res
+        .status(200)
+        .json(
             new ApiResponse(
                 200,
                 {
