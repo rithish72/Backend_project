@@ -1,10 +1,10 @@
 import { Router } from 'express';
 import {
     deleteVideo,
-    getAllVideos,
+    getAllVideo,
     getVideoById,
     publishAVideo,
-    togglePublishStatus,
+    togglePublicStatus,
     updateVideo,
 } from "../controllers/video.controller.js"
 import {verifyJWT} from "../middlewares/auth.middleware.js"
@@ -15,7 +15,7 @@ router.use(verifyJWT);
 
 router
     .route("/")
-    .get(getAllVideos)
+    .get(getAllVideo)
     .post(
         upload.fields([
             {
@@ -37,6 +37,6 @@ router
     .delete(deleteVideo)
     .patch(upload.single("thumbnail"), updateVideo);
 
-router.route("/toggle/publish/:videoId").patch(togglePublishStatus);
+router.route("/toggle/publish/:videoId").patch(togglePublicStatus);
 
 export default router

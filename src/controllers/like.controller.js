@@ -1,8 +1,8 @@
 import mongoose, { isValidObjectId } from "mongoose";
-import { Like } from "../models/like.model";
-import { ApiError } from "../utils/ApiError";
-import { ApiResponse } from "../utils/ApiResponse";
-import { asyncHandler } from "../utils/asyncHandler";
+import { Like } from "../models/like.model.js";
+import { ApiError } from "../utils/ApiError.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
 
 const toggleVideoLike = asyncHandler(async (req, res) => {
     const { videoId } = req.params;
@@ -33,10 +33,14 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
         likedBy: req.user?._id,
     });
 
-    return res.status(200).json(
+    return res
+    .status(200)
+    .json(
         new ApiResponse(
             200,
-            { isLiked: true },
+            { 
+                isLiked: true 
+            },
             "Video liked successfully"
         )
     );
@@ -61,7 +65,7 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
             new ApiResponse(
                 200,
                 { commentId, isLiked: false },
-                "Like removed successfully"
+                "Like removed successfully",
             )
         );
     }
@@ -71,11 +75,16 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
         likedBy: req.user?._id,
     });
 
-    return res.status(200).json(
+    return res
+    .status(200)
+    .json(
         new ApiResponse(
             200,
-            { commentId, isLiked: true },
-            "Comment liked successfully"
+            { 
+                commentId, 
+                isLiked: true,
+            },
+            "Comment liked successfully",
         )
     );
 });
@@ -102,7 +111,7 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
                     tweetId,
                     isLiked: false,
                 },
-                "Like removed successfully"
+                "Like removed successfully",
             )
         );
     }
@@ -112,14 +121,16 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
         likedBy: req.user?._id,
     });
 
-    return res.status(200).json(
+    return res
+    .status(200)
+    .json(
         new ApiResponse(
             200,
             {
                 tweetId,
                 isLiked: true,
             },
-            "Tweet liked successfully"
+            "Tweet liked successfully",
         )
     );
 });
@@ -187,11 +198,13 @@ const getLikedVideos = asyncHandler(async (req, res) => {
         },
     ]).exec(); // Optimize execution
 
-    return res.status(200).json(
+    return res
+    .status(200)
+    .json(
         new ApiResponse(
             200,
             likedVideosAggregate,
-            "Liked videos fetched successfully"
+            "Liked videos fetched successfully",
         )
     );
 });
@@ -200,6 +213,6 @@ export {
     toggleCommentLike,
     toggleTweetLike,
     toggleVideoLike,
-    getLikedVideos
+    getLikedVideos,
 }
 
