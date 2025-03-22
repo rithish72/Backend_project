@@ -140,19 +140,66 @@ const getLikedVideos = asyncHandler(async (req, res) => {
                 pipeline: [
                     {
                         $match: {
-                            isPublished: true,
+                            isPublished: true, // Only fetch published videos
                         },
                     },
                     {
-                        $lookup:{
+                        $lookup: {
                             from: "users",
                             localField: "owner",
                             foreignField: "_id",
                             as: "ownerDetails",
-                        }
-                    }
-                ]
-            }
-        }
-    ])
-})
+                        },
+                    },
+                    {
+                        $unwind: "$ownerDetails",
+                    },
+                    {
+                        $sort: {
+                            createdAt: -1, // Ensure latest liked videos come first
+                        },
+                    },
+                ],
+            },
+        },
+        {
+            $unwind: "$likedVideo",
+        },
+        {
+            $project: {
+                likedVideo: {
+                    _id: 1,
+                    "videoFile.url": 1,
+                    "thumbnail.url": 1,
+                    title: 1,
+                    description: 1,
+                    views: 1,
+                    duration: 1,
+                    createdAt: 1,
+                    isPublished: 1,
+                    ownerDetails: {
+                        username: 1,
+                        fullName: 1,
+                        "avatar.url": 1,
+                    },
+                },
+            },
+        },
+    ]).exec(); // Optimize execution
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            likedVideosAggregate,
+            "Liked videos fetched successfully"
+        )
+    );
+});
+
+export { 
+    toggleCommentLike,
+    toggleTweetLike,
+    toggleVideoLike,
+    getLikedVideos
+}
+
